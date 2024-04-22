@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Riot API Crawler</title>
+  </head>
+  <body>
+    <h1>Brycen's Riot API Crawler</h1>
+    <div style="display: flex">
+      <button id="query" type="button">Download</button
+      ><button id="reconnect" type="button">Reconnect</button>
+      <button id="crawl" type="button">Crawl</button>
+      <button id="cancel" type="button">Cancel</button>
+    </div>
+    <div id="box"></div>
+    <script>
+      const logBox = document.getElementById('box');
+      const queryButton = document.getElementById('query');
+      const reconnectButton = document.getElementById('reconnect');
+      const crawlButton = document.getElementById('crawl');
+      const cancelButton = document.getElementById('cancel');
+
+      const messages = [];
+
+      const render = () => {
+        let html = '<pre>';
+        for (const message of messages) {
+          html += `[${new Date(message.timestamp).toLocaleTimeString('en-US')}] ${message.text} <br/>`;
+        }
+        logBox.innerHTML = html + '</pre>';
+      };
+
+      const log = (message) => {
+        messages.unshift({
+          timestamp: new Date().getTime(),
+          text: message,
+        });
+
+        render();
+      };
+
+      const connect = () => {
+        const socket = new WebSocket(`ws://${window.location.host}`);
+
+        // Listen for messages
+        socket.addEventListener('message', (event) => {
+          log(event.data);
+        });
+
+        queryButton.onclick = () => {
+          socket.send('query');
+        };
+
+        reconnectButton.onclick = () => {
+          socket.close();
+          connect();
+        };
+
+        crawlButton.onclick = () => {
+          socket.send('crawl');
+        };
+
+        cancelButton.onclick = () => {
+          socket.send('cancel');
+        };
+
+        socket.addEventListener('close', (event) => {
+          log('Connection closed');
+        });
+      };
+
+      connect();
+    </script>
+  </body>
+</html>
